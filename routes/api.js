@@ -27,7 +27,7 @@ module.exports = function (app, db) {
               bumped_on: thread.bumped_on,
               replycount: thread.replies.length,
               replies: thread.replies
-                .sort((a, b) => new Date(a.created_on) - new Date(b.created_on))
+                .sort((a, b) => b.created_on - a.created_on)
                 .slice(0, 3)
             };
 
@@ -115,8 +115,6 @@ module.exports = function (app, db) {
 
       db.collection(`${req.params.board}-threads`).findOne(query)
         .then(result => {
-          console.log(result);
-
           const thread = {
             _id: result._id,
             text: result.text,
@@ -133,7 +131,7 @@ module.exports = function (app, db) {
             });
           }
 
-          thread.replies = thread.replies.sort((a, b) => new Date(a.created_on) - new Date(b.created_on));
+          thread.replies = thread.replies.sort((a, b) => a.created_on - b.created_on);
 
           res.json(thread);
         })
@@ -143,8 +141,7 @@ module.exports = function (app, db) {
     })
     
     .post((req, res) => {
-      console.log('req.body: ', req.body);
-      const timeStamp = new Date(); // or use $currentDate parameter?
+      const timeStamp = new Date();
       const filter = { _id: ObjectID(req.body.thread_id) };
       const reply = {
         _id: new ObjectID(),
@@ -165,8 +162,11 @@ module.exports = function (app, db) {
 
       db.collection(`${req.params.board}-threads`).findOneAndUpdate(filter, update, options)
         .then(result => {
-          console.log(result);
-          res.redirect(`/b/${req.params.board}/${req.body.thread_id}`);
+          if (result.lastErrorObject.updatedExisting) {
+            return res.redirect(`/b/${req.params.board}/${req.body.thread_id}`);
+          }
+
+          res.send('error');
         })
         .catch(err => {
           console.log(err);
@@ -175,11 +175,52 @@ module.exports = function (app, db) {
     })
     
     .put((req, res) => {
-      const filter = { _id: req.body.thread_id };
-      const update = {};
-      const options = {};
+      const filter = {
+        _id: ObjectID(req.body.thread_id),
+        'replies._id': ObjectID(req.body.reply_id)
+      };
+      const update = {
+        $set: { 'replies.$.reported': true }
+      };
+      const options = { returnOriginal: false };
+
+      db.collection(`${req.params.board}-threads`).findOneAndUpdate(filter, update, options)
+        .then(result => {
+          console.log(result);
+          if (result.lastErrorObject.updatedExisting) {
+            return res.send('success')
+          }
+
+          res.send('error');
+        })
+        .catch(err => {
+          console.log(err);
+          res.send('error');
+        });
     })
     
-    .delete();
+    .delete((req, res) => {
+      const filter = { _id: ObjectID(req.body.thread_id) };
+      const update = {
+        $pull: {
+          replies: { _id: ObjectID(req.body.reply_id) }
+        }
+      }
+      const options = { returnOriginal: false };
 
+      db.collection(`${req.params.board}-threads`).findOneAndUpdate(filter, update, options)
+        .then(result => {
+          console.log(result);
+
+          if (result.lastErrorObject.updatedExisting) {
+            return res.send('success');
+          }
+
+          res.send('incorrect password');
+        })
+        .catch(err => {
+          console.log(err);
+          res.send('error');
+        });
+    });
 };
