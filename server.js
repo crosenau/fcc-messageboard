@@ -4,14 +4,15 @@ require('dotenv').config();
 
 const express     = require('express');
 const bodyParser  = require('body-parser');
-const expect      = require('chai').expect;
 const cors        = require('cors');
 const MongoClient = require('mongodb').MongoClient;
 const helmet      = require('helmet');
 
-const apiRoutes         = require('./routes/api.js');
-const fccTestingRoutes  = require('./routes/fcctesting.js');
+const apiRoutes         = require('./controllers/api.js');
+const fccTestingRoutes  = require('./controllers/fcctesting.js');
 const runner            = require('./test-runner');
+const initDb            = require('./models/db.js').initDb;
+const getDb             = require('./models/db.js').getDb;
 
 const app = express();
 
@@ -27,8 +28,6 @@ app.use(helmet({
   referrerPolicy: { policy: 'same-origin' }
 }));
 
-
-
 app.use((req, res, next) => {
   console.log('\n');
   console.log(`New ${req.method} request to ${req.path} from ${req.ip}`);
@@ -36,17 +35,14 @@ app.use((req, res, next) => {
   next();
 });
 
-const client = new MongoClient(process.env.DATABASE_URI, { useNewUrlParser: true });
-
-client.connect()
-  .then(() => {
+initDb()
+  .then(db => {
     console.log('Successfully connected to database');
-
-    const db = client.db('fcc');
 
     //For FCC testing purposes
     fccTestingRoutes(app);
-    apiRoutes(app, db);
+    
+    apiRoutes(app);
 
     //Sample front-end
     app.route('/b/:board/')

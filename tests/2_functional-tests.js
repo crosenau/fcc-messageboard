@@ -16,11 +16,34 @@ chai.use(chaiHttp);
 suite('Functional Tests', function() {
 
   suite('API ROUTING FOR /api/threads/:board', function() {
-    
+
     suite('POST', function() {
-      
+      const text = 'POST to /api/threads/test';
+      const delete_password = 'abc123';
+
+      test('New thread', async function() {
+        const reqResult = await chai.request(server)
+        .post('/api/threads/test')
+        .send({
+          text,
+          delete_password
+        })
+
+        /*
+        .end((err, res) => {
+          if (err) console.log(err);
+          console.log('res');
+
+        });
+        */
+        assert.notInstanceOf(reqResult, Error, '');
+        console.log(reqResult);
+        const dbResult = null
+        //done();
+      });
     });
-    
+
+
     suite('GET', function() {
       
     });
