@@ -9,23 +9,22 @@ const options          = { useNewUrlParser: true };
 
 let _db;
 
-function initDb() {
-    return new Promise((resolve, reject) => {
-        if (_db) {
-            console.warn('Database connection already initialized! Returning active connection.');
-            resolve(_db);
-        } else {
+async function initDb() {
+    if (_db) {
+        console.warn('Database connection already initialized! Returning active connection.');
+        return _db;
+    } else {
+        try {
             const client = new MongoClient(connectionString, options);
-            
-            client.connect()
-                .then(() => {
-                    console.log('Successfully connected to Database');
-                    _db = client.db('fcc');
-                    resolve(_db);
-                })
-                .catch(err => reject(err));
+            await client.connect();
+
+            _db = client.db('fcc');
+            return _db;
+        } catch(err) {
+            throw err;
         }
-    });
+    
+    }
 }
 
 function getDb() {
