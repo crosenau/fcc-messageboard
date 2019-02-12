@@ -19,27 +19,23 @@ suite('Functional Tests', function() {
 
     suite('POST', function() {
       const text = 'POST to /api/threads/test';
-      const delete_password = 'abc123';
+      const deletePassword = 'abc123';
+      
+      test('Should redirect to /b/:board', function(done) {
+        chai.request(server)
+          .post('/api/threads/test')
+          .send({
+            text,
+            delete_password: deletePassword
+          })
+          .end((err, res) => {
+            if (err) console.log(err);
 
-      test('New thread', async function() {
-        const reqResult = await chai.request(server)
-        .post('/api/threads/test')
-        .send({
-          text,
-          delete_password
-        })
-
-        /*
-        .end((err, res) => {
-          if (err) console.log(err);
-          console.log('res');
-
-        });
-        */
-        assert.notInstanceOf(reqResult, Error, '');
-        console.log(reqResult);
-        const dbResult = null
-        //done();
+            assert.equal(res.status, 200);
+            assert.isNotNull(res.redirects);
+            assert.match(res.redirects[0], /.*\/b\/test/);
+            done();
+          });
       });
     });
 

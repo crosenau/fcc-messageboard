@@ -4,11 +4,23 @@ const ObjectID = require('mongodb').ObjectID;
 
 const getDb = require('./db.js').getDb;
 
-async function getThreads(board) {
+async function getThreads(board, options = {}) {
+  const defaults = {
+    limit: 10,
+    filtered: true
+  }
+
+  options = Object.assign(defaults, options);
+
   const db = getDb();
 
   try {
-    const dbResults = await db.collection(`${board}-threads`).find({}).sort({bumped_on: -1}).limit(10).toArray();
+    const dbResults = await db.collection(`${board}-threads`)
+      .find({})
+      .sort({bumped_on: -1})
+      .limit(options.limit)
+      .toArray();
+
     const threads = [];
 
     for (let thread of dbResults) {
@@ -22,6 +34,11 @@ async function getThreads(board) {
           .sort((a, b) => b.created_on - a.created_on)
           .slice(0, 3)
       };
+
+      if (!options.filtered) {
+        newThread.reported = thread.reported;
+        newThread.delete_password = thread.delete_password;
+      }
 
       threads.push(newThread);
     }
@@ -51,22 +68,21 @@ async function createThread(board, text, deletePassword) {
       throw new Error('Error posting new thread');
     }
 
-    return dbResults.ops[0];
+    return true;
   } catch(err) {
     throw err;
   }
 }
 
-async function reportThread(board, reportId) {
+async function reportThread(board, threadId) {
   const db = getDb();
-  const filter = { _id: ObjectID(reportId) };
+  const filter = { _id: ObjectID(threadId) };
   const update = { $set: { reported: true } };
   const options = { returnOriginal : false }
 
   try {
     const dbResults = await db.collection(`${board}-threads`).findOneAndUpdate(filter, update, options);
 
-    console.log(dbResults);
     return dbResults.lastErrorObject.updatedExisting;
   } catch(err) {
     throw err;
@@ -83,7 +99,7 @@ async function deleteThread(board, threadId, deletePassword) {
   try {
     const dbResults = await db.collection(`${board}-threads`).findOneAndDelete(filter);
 
-    return dbResults.value;
+    return dbResults.value !== null;
 
   } catch(err) {
     throw err;
@@ -93,8 +109,6 @@ async function deleteThread(board, threadId, deletePassword) {
 async function getFullThread(board, threadId) {
   const db = getDb();
   const query = { _id: ObjectID(threadId) };
-
-  console.log(threadId);
 
   try {
     const dbResults = await db.collection(`${board}-threads`).findOne(query);
@@ -146,7 +160,6 @@ async function createReply(board, threadId, text, deletePassword) {
   try {
     const dbResults = await db.collection(`${board}-threads`).findOneAndUpdate(filter, update, options);
 
-    console.log(dbResults);
     return dbResults.lastErrorObject.updatedExisting
   } catch(err) {
     throw err;
@@ -203,6 +216,31 @@ async function deleteReply(board, threadId, replyId, deletePassword) {
   }
 }
 
+async function getRawThreadsData(board) {
+  const db = getDb();
+
+  try {
+    const dbResults = await db.collection(`${board}-threads`).find({}).sort({bumped_on: -1}).toArray();
+
+    return dbResults;
+  } catch(err) {
+    throw(err);
+  }
+}
+
+async function deleteAllThreadsInBoard(board) {
+  const db = getDb();
+
+  try {
+    const dbResults = db.collection(`${board}-threads`).deleteMany({});
+
+    return dbResults.deletedCount;
+  }
+  catch(err) {
+    throw err;
+  }
+}
+
 module.exports = {
   getThreads,
   createThread,
@@ -211,5 +249,7 @@ module.exports = {
   getFullThread,
   createReply,
   reportReply,
-  deleteReply
+  deleteReply,
+  getRawThreadsData,
+  deleteAllThreadsInBoard
 }

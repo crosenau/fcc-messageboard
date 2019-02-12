@@ -39,7 +39,9 @@ module.exports = function (app) {
 
       threads.createThread(board, text, deletePassword)
         .then((result) => {
-          res.redirect(`/b/${req.params.board}`);
+          if (result) {
+            res.redirect(`/b/${req.params.board}`);
+          }
         })
         .catch(err => {
           console.log(err);
@@ -125,7 +127,6 @@ module.exports = function (app) {
 
       threads.reportReply(board, threadId, replyId)
         .then(result => {
-          console.log(result);
           if (result) {
             return res.send('success')
           }
@@ -139,7 +140,6 @@ module.exports = function (app) {
     })
     
     .delete((req, res) => {
-      console.log(req.body);
       const board = req.params.board;
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;
@@ -147,7 +147,6 @@ module.exports = function (app) {
 
       threads.deleteReply(board, threadId, replyId, deletePassword)
         .then(result => {
-          console.log(result);
           if (result) {
             return res.send('success');
           }
