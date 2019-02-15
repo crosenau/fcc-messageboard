@@ -28,12 +28,17 @@ app.use(helmet({
   referrerPolicy: { policy: 'same-origin' }
 }));
 
+/*
 app.use((req, res, next) => {
   console.log('\n');
   console.log(`New ${req.method} request to ${req.path} from ${req.ip}`);
   console.log('x-forwarded-for: ', req.headers['x-forwarded-for']);
+  console.log('req.params: ', req.params);
+  console.log('req.body: ', req.body);
+  console.log('req.query: ', req.query);
   next();
 });
+*/
 
 initDb()
   .then(db => {
