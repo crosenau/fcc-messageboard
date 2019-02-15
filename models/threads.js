@@ -12,25 +12,23 @@ async function getThreads(board, options = {}) {
 
   options = Object.assign(defaults, options);
 
+  const newThreads = [];
   const db = getDb();
 
   try {
-    const dbResults = await db.collection(`${board}-threads`)
+    const threads = await db.collection(`${board}-threads`)
       .find({})
       .sort({bumped_on: -1})
       .limit(options.limit)
       .toArray();
 
-    const threads = [];
-
-    for (let thread of dbResults) {
+    for (let thread of threads) {
       const newThread = {
         _id: thread._id,
         text: thread.text,
         created_on: thread.created_on,
         bumped_on: thread.bumped_on,
         replycount: thread.replies.length
-
       };
 
       const sortedReplies = thread.replies
@@ -55,12 +53,12 @@ async function getThreads(board, options = {}) {
         }
       }
 
-      threads.push(newThread);
+      newThreads.push(newThread);
     }
 
-    //console.log('threads: ', threads);
-    return threads;
+    return newThreads;
   } catch(err) {
+    console.log(err);
     throw(err);
   }
 }
