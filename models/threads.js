@@ -29,20 +29,36 @@ async function getThreads(board, options = {}) {
         text: thread.text,
         created_on: thread.created_on,
         bumped_on: thread.bumped_on,
-        replycount: thread.replies.length,
-        replies: thread.replies
-          .sort((a, b) => b.created_on - a.created_on)
-          .slice(0, 3)
+        replycount: thread.replies.length
+
       };
+
+      const sortedReplies = thread.replies
+        .sort((a, b) => b.created_on - a.created_on)
+        .slice(0, 3)
 
       if (!options.filtered) {
         newThread.reported = thread.reported;
         newThread.delete_password = thread.delete_password;
+        newThread.replies = sortedReplies;
+      } else {
+        newThread.replies = [];
+
+        for (let reply of sortedReplies) {
+          const filteredReply = {
+            _id: reply._id,
+            text: reply.text,
+            created_on: reply.created_on
+          }
+
+          newThread.replies.push(filteredReply);
+        }
       }
 
       threads.push(newThread);
     }
 
+    //console.log('threads: ', threads);
     return threads;
   } catch(err) {
     throw(err);
@@ -216,18 +232,6 @@ async function deleteReply(board, threadId, replyId, deletePassword) {
   }
 }
 
-async function getRawThreadsData(board) {
-  const db = getDb();
-
-  try {
-    const dbResults = await db.collection(`${board}-threads`).find({}).sort({bumped_on: -1}).toArray();
-
-    return dbResults;
-  } catch(err) {
-    throw(err);
-  }
-}
-
 async function deleteAllThreadsInBoard(board) {
   const db = getDb();
 
@@ -250,6 +254,5 @@ module.exports = {
   createReply,
   reportReply,
   deleteReply,
-  getRawThreadsData,
   deleteAllThreadsInBoard
 }
