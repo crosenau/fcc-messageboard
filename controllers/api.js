@@ -59,7 +59,7 @@ module.exports = function (app) {
             return res.send('success');
           }
 
-          res.send('error: no threads updated');
+          res.send('error');
         })
         .catch(err => {
           console.log(err);

@@ -90,15 +90,17 @@ async function createThread(board, text, deletePassword) {
 
 async function reportThread(board, threadId) {
   const db = getDb();
-  const filter = { _id: ObjectID(threadId) };
-  const update = { $set: { reported: true } };
-  const options = { returnOriginal : false }
 
   try {
+    const filter = { _id: ObjectID(threadId) };
+    const update = { $set: { reported: true } };
+    const options = { returnOriginal : false }
+
     const dbResults = await db.collection(`${board}-threads`).findOneAndUpdate(filter, update, options);
 
     return dbResults.lastErrorObject.updatedExisting;
   } catch(err) {
+    console.log(err);
     throw err;
   }
 }
