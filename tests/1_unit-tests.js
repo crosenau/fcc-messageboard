@@ -8,8 +8,6 @@
 
 const chai = require('chai');
 const assert = chai.assert;
-const expect = chai.expect;
-const should = chai.should(); //can't use due to assertion-analyzer.js?
 
 const threads = require('../models/threads.js');
 
@@ -134,44 +132,38 @@ suite('Unit Tests', function() {
       test('Returns true on success', async function() {
         this.timeout(5000);
 
-        try {
-          const returnValue = await threads.createThread(board, text, deletePassword)
-          
-          assert.isTrue(returnValue);
-        } catch(err) {
-          console.log(err);
-        }
+        const returnValue = await threads.createThread(board, text, deletePassword)
+        
+        assert.isTrue(returnValue);
+        
       });
       
       test('Saves _id, text, created_on(Date), bumped_on(Date), reported(boolean), delete_password, & replies(array)', async function() {
         this.timeout(5000);
-        try { 
-          const fullThreads = await threads.getThreads(board, options);
 
-          assert.lengthOf(fullThreads, 1);
+        const fullThreads = await threads.getThreads(board, options);
 
-          const testThread = fullThreads[0];
+        assert.lengthOf(fullThreads, 1);
 
-          assert.property(testThread, '_id');
-          assert.property(testThread, 'text');
-          assert.property(testThread, 'delete_password');
-          assert.property(testThread, 'created_on');
-          assert.property(testThread, 'bumped_on');
-          assert.property(testThread, 'reported');
-          assert.property(testThread, 'replies');
+        const testThread = fullThreads[0];
 
-          assert.equal(testThread.text, text);
-          assert.equal(testThread.delete_password, deletePassword, );
-          assert.instanceOf(testThread.created_on, Date);
-          assert.instanceOf(testThread.bumped_on, Date);
-          assert.isFalse(testThread.reported);
-          assert.isArray(testThread.replies);
-          assert.isEmpty(testThread.replies);
+        assert.property(testThread, '_id');
+        assert.property(testThread, 'text');
+        assert.property(testThread, 'delete_password');
+        assert.property(testThread, 'created_on');
+        assert.property(testThread, 'bumped_on');
+        assert.property(testThread, 'reported');
+        assert.property(testThread, 'replies');
 
-          threadId = testThread._id;
-        } catch(err) {
-          console.log(err);
-        }
+        assert.equal(testThread.text, text);
+        assert.equal(testThread.delete_password, deletePassword, );
+        assert.instanceOf(testThread.created_on, Date);
+        assert.instanceOf(testThread.bumped_on, Date);
+        assert.isFalse(testThread.reported);
+        assert.isArray(testThread.replies);
+        assert.isEmpty(testThread.replies);
+
+        threadId = testThread._id;        
       });
 
       test('If required parameters (board, text, deletePassword) are not supplied, an error is returned');
@@ -179,24 +171,21 @@ suite('Unit Tests', function() {
 
     suite('#reportThread()', function() {
       test('Returns true on success', async function() {
-        try {
-          const returnValue = await threads.reportThread(board, threadId);
+        this.timeout(5000);
 
-          assert.isTrue(returnValue);
-        } catch (err) {
-          console.log(err);
-        }
+        const returnValue = await threads.reportThread(board, threadId);
+
+        assert.isTrue(returnValue);
       });
 
       test('Sets threads reported property to true', async function() {
-        try {
-          const fullThreads = await threads.getThreads(board, options);
-          const testThread = fullThreads[0];
+        this.timeout(5000);
 
-          assert.isTrue(testThread.reported);
-        } catch(err) {
-          console.log(err);
-        }
+        const fullThreads = await threads.getThreads(board, options);
+        const testThread = fullThreads[0];
+
+        assert.isTrue(testThread.reported);
+        
       });
 
       test('If required parameters (board, threadId) are not supplied, an error is returned');
@@ -206,25 +195,22 @@ suite('Unit Tests', function() {
       let testThread; 
       
       test('Returns true on success', async function() {
-        try {
-          const returnValue = await threads.createReply(board, threadId, replyText, deletePassword);
+        this.timeout(5000);
 
-          assert.isTrue(returnValue);
-        } catch(err) {
-          console.log(err);
-        }
+        const returnValue = await threads.createReply(board, threadId, replyText, deletePassword);
+
+        assert.isTrue(returnValue);
+        
       });
 
       test('Updates bumped_on property of thread', async function() {
-        try {
-          const fullThreads = await threads.getThreads(board, options);
-          
-          testThread = fullThreads[0];
+        this.timeout(5000);
 
-          assert.isAbove(testThread.bumped_on, testThread.created_on);
-        } catch(err) {
-          console.log(err)
-        }
+        const fullThreads = await threads.getThreads(board, options);
+        
+        testThread = fullThreads[0];
+
+        assert.isAbove(testThread.bumped_on, testThread.created_on);
       });
 
       test('Pushes a new object to replies array. Should have properties (_id,  text, reported, delete_password, created_on)', function() {
@@ -261,22 +247,23 @@ suite('Unit Tests', function() {
       let fullThreads;
 
       test('Returns true on success', async function() {
+        this.timeout(5000);
+
         const returnValue = await threads.reportReply(board, threadId, replyId);
 
         assert.isTrue(returnValue);
       });
 
       test('Reply reported property is set to true', async function() {
-        try {
-          fullThreads = await threads.getThreads(board, options);
+        this.timeout(5000);
 
-          const testThread = fullThreads[0];
-          const reply = testThread.replies[0];
+        fullThreads = await threads.getThreads(board, options);
 
-          assert.isTrue(reply.reported);
-        } catch(err) {
-          console.log(err);
-        }
+        const testThread = fullThreads[0];
+        const reply = testThread.replies[0];
+
+        assert.isTrue(reply.reported);
+        
       });
 
       test('If required parameters (board, threadId, replyId) are not supplied, an error is returned');
@@ -287,15 +274,13 @@ suite('Unit Tests', function() {
       let expectedTotalReplies = 5;
       
       suiteSetup(async function() {
-        try {
-          for (let x = 2; x <= expectedTotalReplies; x++) {
-            await threads.createReply(board, threadId, `${replyText} ${x}`, deletePassword);
-          }
+        this.timeout(5000);
 
-          fullThread = await threads.getFullThread(board, threadId);
-        } catch(err) {
-          console.log(err);
+        for (let x = 2; x <= expectedTotalReplies; x++) {
+          await threads.createReply(board, threadId, `${replyText} ${x}`, deletePassword);
         }
+
+        fullThread = await threads.getFullThread(board, threadId);
       });
 
       test('Return value excludes reported or delete_password fields for the thread and replies', function () {
@@ -329,22 +314,23 @@ suite('Unit Tests', function() {
 
     suite('#deleteReply()', function() {
       test('Returns true on success', async function() {
+        this.timeout(5000);
+
         const returnValue = await threads.deleteReply(board, threadId, replyId, deletePassword);
 
         assert.isTrue(returnValue);
       });
 
       test('Specified replyId should no longer exist in thread.replies', async function() {
-        try {
-          const fullThreads = await threads.getThreads(board, options);
-          const testThread = fullThreads.filter(thread => thread._id.equals(threadId))[0];
+        this.timeout(5000);
 
-          testThread.replies.forEach(reply => {
-            assert.isFalse(replyId.equals(reply._id));
-          });
-        } catch(err) {
-          console.log(err);
-        }
+        const fullThreads = await threads.getThreads(board, options);
+        const testThread = fullThreads.filter(thread => thread._id.equals(threadId))[0];
+
+        testThread.replies.forEach(reply => {
+          assert.isFalse(replyId.equals(reply._id));
+        });
+        
       });
 
       test('If required parameters (board, threadId, replyId, deletePassword) are not supplied, an error is returned');
@@ -352,23 +338,19 @@ suite('Unit Tests', function() {
 
     suite('#deleteThread()', function() {
       test('Returns true on success', async function() {
-        try {
-          const returnValue = await threads.deleteThread(board, threadId, deletePassword);
+        this.timeout(5000);
 
-          assert.isTrue(returnValue);
-        } catch(err) {
-          console.log(err);
-        }
+        const returnValue = await threads.deleteThread(board, threadId, deletePassword);
+
+        assert.isTrue(returnValue);
       });
 
       test('Specified threadId no longer exists', async function() {
-        try {
-          const fullThreads = await threads.getThreads(board, options);
+        this.timeout(5000);
 
-          assert.lengthOf(fullThreads, 0);
-        } catch(err) {
-          console.log(err);
-        }
+        const fullThreads = await threads.getThreads(board, options);
+
+        assert.lengthOf(fullThreads, 0);
       });
 
       test('If required parameters (board, threadId, deletePassword) are not supplied, an error is returned');

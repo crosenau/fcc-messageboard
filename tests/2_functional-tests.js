@@ -54,14 +54,10 @@ suite('Functional Tests', function() {
       let response;
 
       suiteSetup(async function() {
-        try {
-          response = await chai.request(server)
-            .get('/api/threads/test');
+        response = await chai.request(server)
+          .get('/api/threads/test');
 
-          threadId = response.body[0]._id;
-        } catch(err) {
-          console.log(err);
-        }
+        threadId = response.body[0]._id;
       });
 
       test('Response is an array with length of 1', function() {
@@ -102,68 +98,52 @@ suite('Functional Tests', function() {
 
     suite('PUT', function() {
       test('Returns “error” when incorrect input is supplied or input is missing', async function() {
-        try {
-        const res = await chai.request(server)
-          .put('/api/threads/test')
-          .send({
-             report_id: '5c628c77250b924058897f13'
-          });
+      const res = await chai.request(server)
+        .put('/api/threads/test')
+        .send({
+            report_id: '5c628c77250b924058897f13'
+        });
 
-        assert.equal(res.status, 200);
-        assert.equal(res.text, 'error');
-        } catch(err) {
-          console.log(err);
-        }
+      assert.equal(res.status, 200);
+      assert.equal(res.text, 'error');
       });
 
       test('Returns "success" when correct data is supplied', async function() {
-        try { 
-          const res = await chai.request(server)
-            .put('/api/threads/test')
-            .send({
-              report_id: threadId,
-              delete_password: deletePassword
-            });
+        const res = await chai.request(server)
+          .put('/api/threads/test')
+          .send({
+            report_id: threadId,
+            delete_password: deletePassword
+          });
 
-          assert.equal(res.status, 200);
-          assert.equal(res.text, 'success');
-          } catch(err) {
-            console.log(err);
-          }
+        assert.equal(res.status, 200);
+        assert.equal(res.text, 'success');
       });
     });
 
     suite('DELETE', function(done) {
       test('Should return "incorrect password" when wrong delete_password is sent', async function() {
-        try {
-          const res = await chai.request(server)
-            .delete('/api/threads/test')
-            .send({
-              thread_id: threadId,
-              delete_password: 'wrong'
-            })
+        const res = await chai.request(server)
+          .delete('/api/threads/test')
+          .send({
+            thread_id: threadId,
+            delete_password: 'wrong'
+          })
 
-          assert.equal(res.status, 200);
-          assert.equal(res.text, 'incorrect password');
-          } catch(err) {
-            console.log(err);
-          }
+        assert.equal(res.status, 200);
+        assert.equal(res.text, 'incorrect password');
       });
 
       test('Should return "success" when correct data is sent', async function() {
-        try {
-          const res = await chai.request(server)
-            .delete('/api/threads/test')
-            .send({
-              thread_id: threadId,
-              delete_password: deletePassword
-            });
+        const res = await chai.request(server)
+          .delete('/api/threads/test')
+          .send({
+            thread_id: threadId,
+            delete_password: deletePassword
+          });
 
-          assert.equal(res.status, 200);
-          assert.equal(res.text, 'success');
-        } catch(err) {
-          console.log(err);
-        }
+        assert.equal(res.status, 200);
+        assert.equal(res.text, 'success');
       });
     });
 
@@ -179,38 +159,29 @@ suite('Functional Tests', function() {
     let replyId; // To be assigned during GET suite
 
     suiteSetup(async function() {
-      try {
-        await threads.createThread(board, text, deletePassword);
+      await threads.createThread(board, text, deletePassword);
 
-        const allThreads = await threads.getThreads(board);
-        
-        threadId = allThreads[0]._id;
-
-      } catch(err) {
-        console.log(err);
-      }
+      const allThreads = await threads.getThreads(board);
+      
+      threadId = allThreads[0]._id;
     });
 
     suite('POST', function() {
       test('On success, should redirect to /b/:board/:thread_id', async function() {
-        try {
-          const res = await chai.request(server)
-            .post('/api/replies/test')
-            .send({
-              thread_id: threadId,
-              text,
-              delete_password: deletePassword
-            });
+        const res = await chai.request(server)
+          .post('/api/replies/test')
+          .send({
+            thread_id: threadId,
+            text,
+            delete_password: deletePassword
+          });
 
-          assert.equal(res.status, 200);
-          
-          const pattern = `/b/test/${threadId.toString()}$`;
-          const re = new RegExp(pattern);
+        assert.equal(res.status, 200);
+        
+        const pattern = `/b/test/${threadId.toString()}$`;
+        const re = new RegExp(pattern);
 
-          assert.match(res.redirects[0], re);
-        } catch(err) {
-          console.log(err);
-        }
+        assert.match(res.redirects[0], re);
       });
     });
     
@@ -218,15 +189,13 @@ suite('Functional Tests', function() {
       let response;
 
       suiteSetup(async function() {
-        try {
-          response = await chai.request(server)
-            .get('/api/replies/test')
-            .query({
-              thread_id: threadId.toString()
-            });
-        } catch(err) {
-          console.log(err);
-        }
+
+        response = await chai.request(server)
+          .get('/api/replies/test')
+          .query({
+            thread_id: threadId.toString()
+          });          
+
       });
       
       test('Returns a json object containing the full thread and the newly added reply', function() {
@@ -261,6 +230,8 @@ suite('Functional Tests', function() {
         assert.property(reply, 'created_on');
         assert.notProperty(reply, 'reported');
         assert.notProperty(reply, 'delete_password');
+
+        replyId = reply._id;
       });
 
       test('Reply matches the text of what was sent', function() {
@@ -278,11 +249,44 @@ suite('Functional Tests', function() {
     });
     
     suite('PUT', function() {
-      
+      test('Returns error when incorrect input is supplied or input is missing');
+
+      test('Returns "success" when correct data is sent', async function() {
+        const response = await chai.request(server)
+          .put('/api/replies/test')
+          .send({
+            thread_id: threadId,
+            reply_id: replyId
+          });
+
+        assert.equal(response.text, 'success');
+      });
     });
     
     suite('DELETE', function() {
+      test('Returns "incorrect password" when wrong delete_password is sent', async function() {
+        const response = await chai.request(server)
+          .delete('/api/replies/test')
+          .send({
+            thread_id: threadId,
+            reply_id: replyId,
+            delete_password: 'wrong'
+          });
+
+          assert.equal(response.text, 'incorrect password');
+      });
       
+      test('Returns "success" when correct data is sent', async function() {
+        const response = await chai.request(server)
+          .delete('/api/replies/test')
+          .send({
+            thread_id: threadId,
+            reply_id: replyId,
+            delete_password: deletePassword
+          });
+
+          assert.equal(response.text, 'success');
+      });
     });
   });
 });
