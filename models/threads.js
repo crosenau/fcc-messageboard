@@ -2,7 +2,7 @@
 
 const ObjectID = require('mongodb').ObjectID;
 
-const getDb = require('./db.js').getDb;
+const getDb = require('../db.js').getDb;
 
 async function getThreads(board, options = {}) {
   const defaults = {

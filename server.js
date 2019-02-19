@@ -5,14 +5,12 @@ require('dotenv').config();
 const express     = require('express');
 const bodyParser  = require('body-parser');
 const cors        = require('cors');
-const MongoClient = require('mongodb').MongoClient;
 const helmet      = require('helmet');
 
 const apiRoutes         = require('./controllers/api.js');
 const fccTestingRoutes  = require('./controllers/fcctesting.js');
 const runner            = require('./test-runner');
-const initDb            = require('./models/db.js').initDb;
-const getDb             = require('./models/db.js').getDb;
+const initDb            = require('./db.js').initDb;
 
 const app = express();
 
@@ -47,7 +45,8 @@ initDb()
     //For FCC testing purposes
     fccTestingRoutes(app);
     
-    apiRoutes(app);
+    //API routing
+    app.use('/api', apiRoutes);
 
     //Sample front-end
     app.route('/b/:board/')
