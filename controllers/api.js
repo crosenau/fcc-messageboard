@@ -8,7 +8,9 @@
 
 'use strict';
 
-const router    = require('express').Router();
+const router                      = require('express').Router();
+const { check, validationResult } = require('express-validator/check');
+
 
 const threads = require('../models/threads.js');
 
@@ -26,12 +28,18 @@ router.route('/threads/:board')
       });
   })
 
-  .post((req, res) => {
-    const board = req.params.board;
-    const text = req.body.text;
-    const deletePassword = req.body.delete_password;
+  .post(check('text').escape().trim(), (req, res) => {
+    console.log(req.body.text);
+    const errors = validationResult(req);
 
-    threads.createThread(board, text, deletePassword)
+    if (!errors.isEmpty) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const board = req.params.board;
+    const { text, delete_password } = req.body;
+
+    threads.createThread(board, text, delete_password)
       .then((result) => {
         if (result) {
           res.redirect(`/b/${req.params.board}`);
@@ -43,17 +51,23 @@ router.route('/threads/:board')
       });
   })
 
-  .put((req, res) => {
-    const board = req.params.board;
-    const reportId = req.body.report_id
+  .put(check('report_id').isMongoId(), (req, res) => {
+    const errors = validationResult(req);
 
-    threads.reportThread(board, reportId)
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const board = req.params.board;
+    const report_id = req.body.report_id
+
+    threads.reportThread(board, report_id)
       .then(result => {
         if (result) {
           return res.send('success');
         }
 
-        res.send('error');
+        res.send('thread not found');
       })
       .catch(err => {
         console.log(err);
@@ -61,12 +75,17 @@ router.route('/threads/:board')
       });
   })
   
-  .delete((req, res) => {
-    const board = req.params.board;
-    const threadId = req.body.thread_id;
-    const deletePassword = req.body.delete_password;
+  .delete(check('thread_id').isMongoId(), (req, res) => {
+    const errors = validationResult(req);
 
-    threads.deleteThread(board, threadId, deletePassword)
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const board = req.params.board;
+    const { thread_id, delete_password } = req.body;
+
+    threads.deleteThread(board, thread_id, delete_password)
       .then(result => {
         if (result) {
           return res.send('success');
@@ -76,17 +95,23 @@ router.route('/threads/:board')
       })
       .catch(err => {
         console.log(err);
-        res.send('error');
+        res.status(422).send('error');
       });
 
   });
 
 router.route('/replies/:board')
-  .get((req, res) => {
-    const board = req.params.board;
-    const threadId = req.query.thread_id;
+  .get(check('thread_id').isMongoId(), (req, res) => {
+    const errors = validationResult(req);
 
-    threads.getFullThread(board, threadId)
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const board = req.params.board;
+    const thread_id = req.query.thread_id;
+
+    threads.getFullThread(board, thread_id)
       .then(result => res.json(result))
       .catch(err => {
         console.log(err);
@@ -94,7 +119,16 @@ router.route('/replies/:board')
       });
   })
   
-  .post((req, res) => {
+  .post([
+    check('thread_id').isMongoId(),
+    check('text').escape().trim()
+  ], (req, res) => {
+    const errors = validationResult(req);
+
+    if(!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
     const board = req.params.board;
     const threadId = req.body.thread_id;
     const text = req.body.text;
@@ -114,7 +148,16 @@ router.route('/replies/:board')
       });
   })
   
-  .put((req, res) => {
+  .put([
+    check('thread_id').isMongoId(),
+    check('reply_id').isMongoId()
+  ], (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
     const board = req.params.board;
     const threadId = req.body.thread_id;
     const replyId = req.body.reply_id;
@@ -133,7 +176,16 @@ router.route('/replies/:board')
       });
   })
   
-  .delete((req, res) => {
+  .delete([
+    check('thread_id').isMongoId(),
+    check('reply_id').isMongoId()
+  ], (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
     const board = req.params.board;
     const threadId = req.body.thread_id;
     const replyId = req.body.reply_id;
