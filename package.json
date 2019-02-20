@@ -1,5 +1,5 @@
 {
-	"name": "Anonymous message board",
+	"name": "anonymous-messageboard",
 	"version": "0.0.1",
 	"description": "What am I about?",
 	"main": "server.js",
