@@ -6,11 +6,12 @@
 *       (if additional are added, keep them at the very end!)
 */
 
-var chaiHttp = require('chai-http');
-var chai = require('chai');
-var assert = chai.assert;
-var server = require('../server');
+const chaiHttp = require('chai-http');
+const chai = require('chai');
+const assert = chai.assert;
+const unescape = require('validator').unescape;
 
+const server = require('../server');
 const threads = require('../models/threads.js');
 
 chai.use(chaiHttp);
@@ -32,21 +33,18 @@ suite('Functional Tests', function() {
 
   suite('API ROUTING FOR /api/threads/:board', function() {
     suite('POST', function() {
-      test('Redirects to /b/:board', function(done) {
-        chai.request(server)
+      test('Redirects to /b/:board', async function() {
+        response = await chai.request(server)
           .post(`/api/threads/test`)
           .send({
             text,
             delete_password: deletePassword
-          })
-          .end((err, res) => {
-            if (err) console.log(err);
-
-            assert.equal(res.status, 200);
-            assert.isNotNull(res.redirects);
-            assert.match(res.redirects[0], /.*\/b\/test$/);
-            done();
           });
+
+          
+          assert.equal(response.status, 200);
+          assert.isNotNull(response.redirects);
+          assert.match(response.redirects[0], /.*\/b\/test$/);
       });
     });
 
@@ -79,11 +77,11 @@ suite('Functional Tests', function() {
         });
       });
 
-      test('Values match what input data', function() {
+      test('Returned property values match input data', function() {
         response.body.forEach(thread => {
           assert.isString(thread._id);
           assert.isString(thread.text);
-          assert.equal(thread.text, text);
+          assert.equal(unescape(thread.text), text);
           assert.isString(thread.created_on);
           assert.isString(thread.bumped_on);
           assert.isArray(thread.replies);
@@ -97,15 +95,16 @@ suite('Functional Tests', function() {
     });
 
     suite('PUT', function() {
-      test('Returns “error” when incorrect input is supplied or input is missing', async function() {
+      test('Returns error message when a threadId for a non-existent thread is supplied', async function() {
       const res = await chai.request(server)
         .put('/api/threads/test')
         .send({
             report_id: '5c628c77250b924058897f13'
         });
+        console.log(res.text);
 
       assert.equal(res.status, 200);
-      assert.equal(res.text, 'error');
+      assert.equal(res.text, 'thread not found');
       });
 
       test('Returns "success" when correct data is supplied', async function() {
@@ -121,7 +120,7 @@ suite('Functional Tests', function() {
       });
     });
 
-    suite('DELETE', function(done) {
+    suite('DELETE', function() {
       test('Should return "incorrect password" when wrong delete_password is sent', async function() {
         const res = await chai.request(server)
           .delete('/api/threads/test')
@@ -237,7 +236,7 @@ suite('Functional Tests', function() {
       test('Reply matches the text of what was sent', function() {
         const reply = response.body.replies[0];
 
-        assert.equal(reply.text, text);
+        assert.equal(unescape(reply.text), text);
       });
 
       test('Thread.bumped_on date matches reply.created_on', function() {
